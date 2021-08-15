@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AppService {
-  getHello() {
-    return 'Hello world if nest';
+  getHome() {
+    return 'Test task for yalantis Node.js school';
   }
 }
