@@ -1,15 +1,18 @@
 import {
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './user.entity';
-const path = require('path');
 import { nanoid } from 'nanoid';
+import { FindUserDto } from './dto/find-user.dto';
+import { Repository } from 'typeorm';
+const path = require('path');
+const fs = require('fs/promises');
 const sharp = require('sharp');
 
 @Injectable()
@@ -36,12 +39,13 @@ export class UsersService {
     body: CreateUserDto,
     photo: Express.Multer.File,
   ): Promise<number> {
-    const user = new User();
-    user.firstName = body.firstName;
-    user.lastName = body.lastName;
-    user.email = body.email;
     const savedPhotoPath = await this.saveCroppedPhoto(photo);
-    user.photoUrl = savedPhotoPath;
+    const user = new User(
+      body.firstName,
+      body.lastName,
+      body.email,
+      savedPhotoPath,
+    );
     const response = await this.userRepository.save(user);
     if (!response) {
       throw new ConflictException();
@@ -53,11 +57,31 @@ export class UsersService {
     return this.userRepository.find();
   }
 
-  async findOne(id: number): Promise<User> {
+  private async readPhoto(fileName: string): Promise<Buffer> {
+    const img = await fs.readFile(fileName);
+    if (!img) {
+      console.dir(
+        'Error: profile picture of existing user does not exist on filesystem',
+      );
+      throw new InternalServerErrorException('User`s photo not found');
+    }
+    return img;
+  }
+
+  async findOne(id: number): Promise<FindUserDto> {
     const user = await this.userRepository.findOne(id);
     if (!user) {
       throw new NotFoundException();
     }
-    return user;
+    const { photoUrl } = user;
+    const photo = await this.readPhoto(photoUrl);
+    const userWithPhoto = new FindUserDto(
+      user.id,
+      user.firstName,
+      user.lastName,
+      user.email,
+      photo,
+    );
+    return userWithPhoto;
   }
 }
