@@ -5,18 +5,25 @@ import {
   Body,
   Param,
   ParseIntPipe,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './user.entity';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  async create(@Body() createUserDto: CreateUserDto): Promise<number> {
-    return await this.usersService.create(createUserDto);
+  @UseInterceptors(FileInterceptor('photo'))
+  async create(
+    @Body() body: CreateUserDto,
+    @UploadedFile() photo: Express.Multer.File,
+  ): Promise<number> {
+    return await this.usersService.create(body, photo);
   }
 
   @Get()
