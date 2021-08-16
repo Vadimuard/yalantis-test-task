@@ -1,4 +1,9 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -38,6 +43,9 @@ export class UsersService {
     const savedPhotoPath = await this.saveCroppedPhoto(photo);
     user.photoUrl = savedPhotoPath;
     const response = await this.userRepository.save(user);
+    if (!response) {
+      throw new ConflictException();
+    }
     return response.id;
   }
 
@@ -45,7 +53,11 @@ export class UsersService {
     return this.userRepository.find();
   }
 
-  findOne(id: number): Promise<User> {
-    return this.userRepository.findOne(id);
+  async findOne(id: number): Promise<User> {
+    const user = await this.userRepository.findOne(id);
+    if (!user) {
+      throw new NotFoundException();
+    }
+    return user;
   }
 }
