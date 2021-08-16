@@ -35,6 +35,17 @@ export class UsersService {
     return fileName;
   }
 
+  private async readPhoto(fileName: string): Promise<Buffer> {
+    const img = await fs.readFile(fileName);
+    if (!img) {
+      console.dir(
+        'Error: profile picture of existing user does not exist on filesystem',
+      );
+      throw new InternalServerErrorException('User`s photo not found');
+    }
+    return img;
+  }
+
   async create(
     body: CreateUserDto,
     photo: Express.Multer.File,
@@ -55,17 +66,6 @@ export class UsersService {
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
-  }
-
-  private async readPhoto(fileName: string): Promise<Buffer> {
-    const img = await fs.readFile(fileName);
-    if (!img) {
-      console.dir(
-        'Error: profile picture of existing user does not exist on filesystem',
-      );
-      throw new InternalServerErrorException('User`s photo not found');
-    }
-    return img;
   }
 
   async findOne(id: number): Promise<FindUserDto> {

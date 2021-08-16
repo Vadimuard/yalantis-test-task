@@ -1,30 +1,24 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
-</p>
+# Yalantis test task
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## About my implementation
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Application is built using Nest.JS and typescript. I've chosen PostgreSQL with TypeORM as my database setup for this task. To implement image manipulation I've chosen _Sharp_ library.
 
-## Description
+Validation of input data is managed by `ValidationPipe` and several descriptions of class fields in `CreateUserDTO` class, for example.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Photos are transformed and saved to file system with newly generated file names. These file names are then stored in the database table `user` in the field `photoUrl`. When `findOne` method is called it returns a modified user entity where `photoUrl` is substituted with `photo` of type `Buffer`
+
+However, `findAll` method does not return users with `photo` attribute since reading files for all users might take too long. Therefore, `photoUrl` is among other attributes.
+
+## Routes in the app
+
+```
+/users
+  GET   - get all users
+  POST  - create a user
+/users/:id
+  GET   - get one user by id
+```
 
 ## Installation
 
@@ -37,37 +31,34 @@ $ npm install
 ```bash
 # development
 $ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
 ```
 
-## Test
+## Program was tested using Postman
 
-```bash
-# unit tests
-$ npm run test
+First, we create our first user by filling all the necessary fields
 
-# e2e tests
-$ npm run test:e2e
+![User created with POST method](docs/create-user.png)
 
-# test coverage
-$ npm run test:cov
-```
+If we don't include any of the fields, for example `photo`, we get an expected bad request error with an error message
 
-## Support
+![400 http error is returned in case of wrong input](docs/create-wrong-user.png)
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+If we leave a field empty or input an email of incorrect format, we also get error
 
-## Stay in touch
+![400 http error in case of invalid email or empty field](docs/create-user-email-invalid.png)
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+![400 http error in case of invalid email or empty field](docs/create-user-empty-firstname.png)
 
-## License
+Now we want to get all our users
 
-Nest is [MIT licensed](LICENSE).
+![Get all users](docs/find-all.png)
+
+Let's get that user with id of 1
+
+![Get user with id of 1 - 404 error](docs/find-one-wrong-id.png)
+
+Ooops, user with id of 1 does not exist in our database! Therefore, we get a 404 http error. Let's try id of 13
+
+![Get user with id of 13 - success](docs/find-one.png)
+
+Finally, we received a valid user with a mentioned above `photo` attribute of type Buffer.
